@@ -20,5 +20,8 @@ dependencies:
 compiler:
   solc:
     version: 0.6.12
+    optimizer:
+      details:
+        yul: false
     remappings:
       - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@3.3.0"

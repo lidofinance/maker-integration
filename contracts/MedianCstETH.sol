@@ -1,25 +1,27 @@
-// median.sol - Medianizer v2
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
-// Copyright (C) 2019 Maker Foundation
+// Copyright (C) 2017-2020 Maker Ecosystem Growth Holdings, INC.
 
 // This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
+// it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <http://www.gnu.org/licenses/>.
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity >=0.5.10;
 
+
 import "./LibNote.sol";
 
-contract Median is LibNote {
+
+contract MedianCstETH is LibNote {
 
     // --- Auth ---
     mapping (address => uint) public wards;
@@ -32,7 +34,7 @@ contract Median is LibNote {
 
     uint128        val;
     uint32  public age;
-    bytes32 public constant wat = "ethusd"; // You want to change this every deploy
+    bytes32 public constant wat = "CstETH"; // You want to change this every deploy
     uint256 public bar = 1;
 
     // Authorized oracles, set by an auth
@@ -144,16 +146,5 @@ contract Median is LibNote {
         for(uint i = 0; i < a.length; i++) {
             bud[a[i]] = 0;
         }
-    }
-}
-
-contract MedianCstETH is Median {
-    bytes32 public override constant wat = "CstETH";
-
-    function recover(uint256 val_, uint256 age_, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
-        return ecrecover(
-            keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(val_, age_, wat)))),
-            v, r, s
-        );
     }
 }

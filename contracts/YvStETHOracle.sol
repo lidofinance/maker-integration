@@ -42,6 +42,9 @@ contract YvStETHOracle {
     Feed public cur;  // Current price  (mem slot 0x3)
     Feed public nxt;  // Queued price   (mem slot 0x4)
 
+    uint128 low  = 7 * (10 ** 17); // Minimum stETH/ETH price
+    uint128 high = 10 ** 18;       // Maximum stETH/ETH price
+
     // --- Stop ---
     uint256 public stopped;  // Stop/start ability to read
     modifier stoppable { require(stopped == 0, "YvStETHOracle/is-stopped"); _; }
@@ -59,11 +62,14 @@ contract YvStETHOracle {
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x, "ds-math-add-overflow");
     }
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x - y) <= x, "ds-math-sub-underflow");
-    }
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "ds-math-mul-overflow");
+    }
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+    function max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a >= b ? a : b;
     }
 
     // --- Events ---
@@ -72,6 +78,7 @@ contract YvStETHOracle {
     event Step(uint256 hop);
     event Stop();
     event Start();
+    event Frame(uint256 low, uint256 high);
     event Value(uint128 curVal, uint128 nxtVal);
     event Link(address orb);
 
@@ -106,6 +113,15 @@ contract YvStETHOracle {
         emit Link(_orb);
     }
 
+    function frame(uint256 _low, uint256 _high) external auth {
+        require(_low <= uint128(-1), "YvStETHOracle/invalid-low");
+        require(_high <= uint128(-1), "YvStETHOracle/invalid-high");
+        require(_low <= _high, "YvStETHOracle/invalid-frame");
+        low = uint128(_low);
+        high = uint128(_high);
+        emit Frame(_low, _high);
+    }
+
     function pass() public view returns (bool ok) {
         return block.timestamp >= add(zzz, hop);
     }
@@ -125,7 +141,7 @@ contract YvStETHOracle {
         uint256 shares = StEthLike(STETH).getTotalShares();
 
         // Calc the amount of ETH received for one stETH (WAD)
-        uint256 eth = StableSwapLike(SWAP).get_dy(SWAP_STETH, SWAP_ETH, WAD);
+        uint256 eth = min(high, max(low, StableSwapLike(SWAP).get_dy(SWAP_STETH, SWAP_ETH, WAD)));
 
         // Calc the amount of USD received for one stETH share (WAD)
         // usdPerShare = usdPerEther * (etherPerToken * totalTokens / totalShares)
